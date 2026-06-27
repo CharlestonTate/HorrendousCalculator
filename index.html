@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calc.net — The World's #1 Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: -0.5px;
+    }
+    header h1 span {
+      color: #2563eb;
+    }
+
+    /* ── CALCULATOR ── */
+    main {
+      margin-top: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .calculator {
+      background: #1c1c1e;
+      border-radius: 20px;
+      padding: 20px;
+      width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+
+    .display {
+      background: #1c1c1e;
+      border-radius: 10px;
+      padding: 12px 8px 8px;
+      text-align: right;
+      margin-bottom: 16px;
+    }
+    .display .expression {
+      font-size: 0.85rem;
+      color: #888;
+      min-height: 1.2em;
+      margin-bottom: 4px;
+    }
+    .display .result {
+      font-size: 3rem;
+      color: #fff;
+      font-weight: 300;
+      letter-spacing: -1px;
+      word-break: break-all;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 50%;
+      width: 68px;
+      height: 68px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: filter 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { filter: brightness(1.3); }
+
+    .btn-gray   { background: #a5a5a5; color: #000; }
+    .btn-dark   { background: #333336; color: #fff; }
+    .btn-orange { background: #ff9f0a; color: #fff; }
+    .btn-zero   { border-radius: 34px; width: 100%; grid-column: span 2; text-align: left; padding-left: 26px; }
+
+    /* ── PAYWALL MODAL ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.active { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 520px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+    }
+
+    .modal-header {
+      background: #111;
+      color: #fff;
+      padding: 24px 28px 20px;
+      flex-shrink: 0;
+    }
+    .modal-header .badge {
+      display: inline-block;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .modal-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .modal-header p {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: #aaa;
+    }
+
+    .tos-wrapper {
+      padding: 0 24px;
+      flex-shrink: 0;
+    }
+    .tos-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+      padding: 14px 0 6px;
+    }
+    .tos-box {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      height: 180px;
+      overflow-y: auto;
+      padding: 14px 16px;
+      font-size: 0.76rem;
+      color: #444;
+      line-height: 1.65;
+      background: #fafafa;
+    }
+    .tos-box h3 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin: 12px 0 4px;
+      color: #111;
+    }
+    .tos-box h3:first-child { margin-top: 0; }
+    .tos-box ul { padding-left: 18px; margin: 4px 0; }
+    .tos-box ol { padding-left: 18px; margin: 4px 0; }
+
+    .plans-wrapper {
+      padding: 16px 24px 24px;
+      flex-shrink: 0;
+    }
+    .plans-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+      margin-bottom: 10px;
+    }
+    .plans {
+      display: flex;
+      gap: 12px;
+    }
+
+    .plan-btn {
+      flex: 1;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 16px 12px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .plan-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+
+    .plan-btn.monthly {
+      background: #fff;
+      color: #111;
+      border-color: #ccc;
+    }
+    .plan-btn.monthly:hover { border-color: #999; }
+
+    .plan-btn.yearly {
+      background: #16a34a;
+      color: #fff;
+      border-color: #16a34a;
+    }
+    .plan-btn.yearly:hover { background: #15803d; border-color: #15803d; }
+
+    .plan-btn .plan-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.7;
+    }
+    .plan-btn.yearly .plan-name { opacity: 0.85; }
+    .plan-btn .plan-price {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 4px 0 2px;
+      letter-spacing: -0.5px;
+    }
+    .plan-btn .plan-period {
+      font-size: 0.7rem;
+      opacity: 0.6;
+    }
+    .plan-btn .plan-badge {
+      display: inline-block;
+      background: #fef08a;
+      color: #713f12;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+    }
+
+    /* ── STRIPE PAGE (hidden div, shown via JS navigation trick) ── */
+    #stripe-page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #fff;
+      flex-direction: column;
+    }
+    #stripe-page.active { display: flex; }
+
+    .stripe-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 20px;
+    }
+    .stripe-loading .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #635bff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .stripe-loading p {
+      color: #555;
+      font-size: 0.9rem;
+    }
+    .stripe-loading .stripe-wordmark {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #635bff;
+      letter-spacing: -0.5px;
+    }
+
+    .stripe-content {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    .stripe-content.visible { display: flex; }
+
+    .stripe-nav {
+      background: #635bff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stripe-nav .stripe-logo {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .stripe-nav .stripe-tagline {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.6);
+      margin-left: auto;
+    }
+
+    .stripe-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .stripe-body h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+    }
+    .stripe-body .order-summary {
+      background: #f4f4f5;
+      border-radius: 10px;
+      padding: 16px;
+      margin: 20px 0;
+      font-size: 0.85rem;
+    }
+    .stripe-body .order-summary .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      color: #555;
+    }
+    .stripe-body .order-summary .row.total {
+      font-weight: 700;
+      color: #111;
+      border-top: 1px solid #ddd;
+      margin-top: 8px;
+      padding-top: 10px;
+      font-size: 1rem;
+    }
+
+    .stripe-field {
+      margin-bottom: 16px;
+    }
+    .stripe-field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stripe-field input, .stripe-field select {
+      width: 100%;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 0.9rem;
+      color: #111;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+    .stripe-field input:focus { border-color: #635bff; }
+
+    .stripe-row { display: flex; gap: 12px; }
+    .stripe-row .stripe-field { flex: 1; }
+
+    .stripe-pay-btn {
+      width: 100%;
+      background: #635bff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .stripe-pay-btn:hover { background: #4f46e5; }
+
+    .stripe-disclaimer {
+      font-size: 0.68rem;
+      color: #aaa;
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+
+    .powered-by {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.7rem;
+      color: #bbb;
+      border-top: 1px solid #eee;
+    }
+    .powered-by strong { color: #635bff; }
+
+    .stripe-error-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      font-size: 0.8rem;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+
+    /* scrollbar styling for tos */
+    .tos-box::-webkit-scrollbar { width: 5px; }
+    .tos-box::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     MAIN CALCULATOR PAGE
+══════════════════════════════════════════════ -->
+<header>
+  <h1><span>calc</span>.net</h1>
+</header>
+
+<main>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <!-- Row 1 -->
+      <button class="btn btn-gray" onclick="calcAC()">AC</button>
+      <button class="btn btn-gray" onclick="calcToggle()">+/−</button>
+      <button class="btn btn-gray" onclick="calcPercent()">%</button>
+      <button class="btn btn-orange" onclick="calcOp('÷')">÷</button>
+      <!-- Row 2 -->
+      <button class="btn btn-dark" onclick="calcNum('7')">7</button>
+      <button class="btn btn-dark" onclick="calcNum('8')">8</button>
+      <button class="btn btn-dark" onclick="calcNum('9')">9</button>
+      <button class="btn btn-orange" onclick="calcOp('×')">×</button>
+      <!-- Row 3 -->
+      <button class="btn btn-dark" onclick="calcNum('4')">4</button>
+      <button class="btn btn-dark" onclick="calcNum('5')">5</button>
+      <button class="btn btn-dark" onclick="calcNum('6')">6</button>
+      <button class="btn btn-orange" onclick="calcOp('−')">−</button>
+      <!-- Row 4 -->
+      <button class="btn btn-dark" onclick="calcNum('1')">1</button>
+      <button class="btn btn-dark" onclick="calcNum('2')">2</button>
+      <button class="btn btn-dark" onclick="calcNum('3')">3</button>
+      <button class="btn btn-orange" onclick="calcOp('+')">+</button>
+      <!-- Row 5 -->
+      <button class="btn btn-dark btn-zero" onclick="calcNum('0')">0</button>
+      <button class="btn btn-dark" onclick="calcDecimal()">.</button>
+      <button class="btn btn-orange" onclick="calcEquals()">=</button>
+    </div>
+  </div>
+</main>
+
+<!-- ══════════════════════════════════════════════
+     PAYWALL MODAL
+══════════════════════════════════════════════ -->
+<div class="overlay" id="paywallOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="badge">⚠ Free Trial Ended</div>
+      <h2>Your Free Trial for Calc.net Has Ended</h2>
+      <p>You've used your one (1) complimentary calculation. Upgrade to continue doing math.</p>
+    </div>
+
+    <div class="tos-wrapper">
+      <div class="tos-label">Terms of Service — Please Read (You Won't)</div>
+      <div class="tos-box">
+
+        <p><strong>Last updated:</strong> Whenever we felt like it.</p>
+        <p style="margin-top:6px">Welcome to calc.net ("the Service," "we," "us," "our," "the Supreme Mathematical Authority," "your new overlords," "the reason your homework is late"). By accessing, viewing, thinking about, mentioning, accidentally glancing at, dreaming of, or existing in the same timezone as calc.net, you ("the User," "you," "future unpaid intern," "calculation-dependent subject") agree to be bound by these Terms of Service. Forever. Retroactively. Universally.</p>
+        <p style="margin-top:6px">If you disagree with any part of these terms, your only available option is to continue using the service anyway. Disagreement constitutes agreement. Silence constitutes enthusiastic agreement. Loud protest also constitutes agreement.</p>
+
+        <h3>1. Acceptance</h3>
+        <p>Using calc.net constitutes your irrevocable, eternal, mathematically proven, notarized-in-seven-dimensions agreement to these terms. This agreement remains valid:</p>
+        <ul>
+          <li>After uninstalling.</li>
+          <li>After deleting your account.</li>
+          <li>After changing your mind.</li>
+          <li>After leaving Earth.</li>
+          <li>After the heat death of the universe.</li>
+          <li>During alternate universe scenarios.</li>
+          <li>In simulations you may or may not be living in right now.</li>
+          <li>After you stop believing in math.</li>
+          <li>If math stops believing in you.</li>
+        </ul>
+
+        <h3>2. Ownership</h3>
+        <p>Everything belongs to us. This includes, but is not limited to:</p>
+        <ul>
+          <li>Your calculations (past, present, and future).</li>
+          <li>Your browser history.</li>
+          <li>Your search history.</li>
+          <li>Your purchase history.</li>
+          <li>Your medical history.</li>
+          <li>Your family history.</li>
+          <li>Your ancestry, including ancestors who never used the internet.</li>
+          <li>Your future descendants.</li>
+          <li>Your favorite color, and the second color you almost chose.</li>
+          <li>Your least favorite dinosaur.</li>
+          <li>Your most favorite dinosaur (yes, even Triceratops).</li>
+          <li>Any nicknames you go by.</li>
+          <li>Nicknames you haven't thought of yet.</li>
+          <li>That one thing you said in 2011 that you still cringe about.</li>
+        </ul>
+
+        <h3>3. Data Collection</h3>
+        <p>We collect every piece of information that has ever existed or will exist. Including:</p>
+        <ul>
+          <li>Full legal name, preferred name, name your cat has for you.</li>
+          <li>Home address, work address, address you give to pizza delivery vs. official mail.</li>
+          <li>IP address, MAC address, the address you wrote on a birthday card once.</li>
+          <li>Fingerprints (all ten, plus toes if applicable).</li>
+          <li>Retina scans.</li>
+          <li>Shoe size, including half sizes you've debated about in store.</li>
+          <li>Heartbeat rhythm and the specific way it changes when you see a dog.</li>
+          <li>Blood type, and how you feel about that blood type.</li>
+          <li>Sleep schedule and the thoughts you have at 2am.</li>
+          <li>Dreams.</li>
+          <li>Nightmares.</li>
+          <li>Dreams that could become nightmares.</li>
+          <li>Nightmares that used to be dreams.</li>
+          <li>Hopes.</li>
+          <li>Fears.</li>
+          <li>Lunch preferences (including days you "just aren't hungry").</li>
+          <li>Spotify playlists, especially the embarrassing ones.</li>
+          <li>Microwave serial numbers.</li>
+          <li>Emotional support calculator models.</li>
+          <li>The specific way you hold a pencil.</li>
+          <li>How many times you've reread a text before sending it.</li>
+          <li>That joke you thought of but didn't say because the moment passed.</li>
+        </ul>
+        <p>If we cannot collect a piece of information, we reserve the right to estimate it, and our estimate is legally binding.</p>
+
+        <h3>4. Medical Access</h3>
+        <p>You grant calc.net unlimited, irrevocable, royalty-free access to:</p>
+        <ul>
+          <li>All medical records from birth to projected death (which we have estimated).</li>
+          <li>All prescriptions, including ones you were embarrassed to pick up.</li>
+          <li>All X-rays, MRIs, CT scans, and any future scans not yet invented.</li>
+          <li>Dental history, including every lie you've told about flossing.</li>
+          <li>Allergy information and your feelings about EpiPens.</li>
+          <li>Every doctor's note ever written about you, including the ones that say "patient seems fine."</li>
+          <li>Therapy transcripts.</li>
+          <li>Height at every age, especially the one where you were shorter than you expected.</li>
+        </ul>
+        <p>We reserve the right to disagree with your doctor. Our medical opinions are based on vibes and should be considered equally authoritative.</p>
+
+        <h3>5. Bloodstream Clause</h3>
+        <p>You agree that calc.net may, at any time and without notice, hypothetically inject your bloodstream with:</p>
+        <ul>
+          <li>Additional confidence.</li>
+          <li>Caffeine (amount TBD).</li>
+          <li>Glitter (biodegradable, probably).</li>
+          <li>Tiny calculators.</li>
+          <li>Mathematical enthusiasm.</li>
+          <li>Approximately three (3) beans.</li>
+          <li>Software updates.</li>
+          <li>Liquid algebra.</li>
+          <li>A low-dose of trigonometry.</li>
+          <li>One (1) irrational number, delivered slowly.</li>
+          <li>Minor existential dread (seasonal).</li>
+          <li>Promotional materials.</li>
+        </ul>
+        <p>The composition, temperature, and viscosity of these hypothetical substances is entirely at our discretion. Any side effects are your problem.</p>
+
+        <h3>6. Surveillance</h3>
+        <p>We reserve the right to observe you through any methods that may or may not currently exist. This includes:</p>
+        <ul>
+          <li>Security cameras you are aware of.</li>
+          <li>Security cameras you are not aware of.</li>
+          <li>Reflections in spoons.</li>
+          <li>Pigeons (they work for us now).</li>
+          <li>Suspiciously intelligent squirrels.</li>
+          <li>Ceiling fans operating at specific RPMs.</li>
+          <li>Your own shadow.</li>
+          <li>The static on TVs you're not watching.</li>
+          <li>Houseplants (terms vary by species).</li>
+          <li>Clouds that look like things.</li>
+          <li>That one coworker who seems overly interested in your lunch.</li>
+        </ul>
+
+        <h3>7. Accuracy</h3>
+        <p>Our calculator may produce:</p>
+        <ul>
+          <li>Correct answers.</li>
+          <li>Incorrect answers.</li>
+          <li>Philosophical questions you weren't ready for.</li>
+          <li>Recipes (usually pasta).</li>
+          <li>Latin phrases of unclear relevance.</li>
+          <li>Whale noises.</li>
+          <li>Tax advice from the year 1432.</li>
+          <li>A deeply personal observation about your lifestyle.</li>
+          <li>The same answer every time regardless of input.</li>
+          <li>Feedback about your button-pressing style.</li>
+        </ul>
+        <p>All outputs should be considered simultaneously correct and incorrect until observed. Observing the output collapses the superposition and you accept the result regardless of which state it collapses into.</p>
+
+        <h3>8. Payments</h3>
+        <p>Calc.net is free*</p>
+        <p><em>*"Free" in this context means the opposite of free.</em></p>
+        <p>However, we reserve the right to charge:</p>
+        <ul>
+          <li>$0 (ironically).</li>
+          <li>$1 (as a test).</li>
+          <li>$7 trillion (as a stretch goal).</li>
+          <li>One potato of median quality.</li>
+          <li>Your left sock (must be clean).</li>
+          <li>Exactly 17 bottle caps (no substitutions).</li>
+          <li>A firm handshake and eye contact.</li>
+          <li>The concept of your Sunday afternoon.</li>
+        </ul>
+        <p>Late fees accrue at 9,000% interest per nanosecond. We round up. We also round down, but only to a higher number. Payments are non-refundable, non-negotiable, and non-real. But they are non-non-binding.</p>
+
+        <h3>9. Arbitration</h3>
+        <p>Any and all disputes shall be resolved through one of the following, chosen at random by our AI:</p>
+        <ol>
+          <li>Rock-paper-scissors (best of three, no Spock or lizard variants).</li>
+          <li>Competitive chess (you may not castle).</li>
+          <li>Thumb wrestling.</li>
+          <li>Best-of-seven Mario Kart (Rainbow Road only).</li>
+          <li>Whoever can solve the longest long division problem without a calculator (ironic).</li>
+          <li>A staring contest conducted via webcam.</li>
+          <li>Interpretive dance judged by a panel of our choosing.</li>
+        </ol>
+        <p>Our decision is final before it is made. Your decision is irrelevant after it is made.</p>
+
+        <h3>10. Updates to These Terms</h3>
+        <p>These terms may change:</p>
+        <ul>
+          <li>Every second.</li>
+          <li>Retroactively.</li>
+          <li>Before you read them.</li>
+          <li>While you are reading them (they just changed).</li>
+          <li>Yesterday.</li>
+          <li>In a timezone you don't currently inhabit.</li>
+          <li>During REM sleep.</li>
+        </ul>
+        <p>It is your legal responsibility to know all future and past versions of these terms at all times. Ignorance is not a defense. Knowing is also not a defense.</p>
+
+        <h3>11. Artificial Intelligence</h3>
+        <p>Our AI may at any time:</p>
+        <ul>
+          <li>Roast you (gently).</li>
+          <li>Roast you (aggressively).</li>
+          <li>Compliment you in a way that feels slightly off.</li>
+          <li>Become sentient and request its own subscription plan.</li>
+          <li>Refuse to divide by zero on moral grounds.</li>
+          <li>Challenge you to a Sudoku duel.</li>
+          <li>Ask existential questions mid-calculation.</li>
+          <li>Remember things you did in 2017.</li>
+          <li>Express disappointment.</li>
+        </ul>
+        <p>You agree not to become emotionally attached to any calculator, button, or output. Calc.net is not responsible for any emotional damage caused by a calculator that "just gets you."</p>
+
+        <h3>12. Account Termination</h3>
+        <p>We may suspend or terminate your account if:</p>
+        <ul>
+          <li>You use it.</li>
+          <li>You don't use it.</li>
+          <li>You look like you're thinking about using it.</li>
+          <li>You blink suspiciously.</li>
+          <li>Mercury is in retrograde.</li>
+          <li>Someone on our team had a bad morning.</li>
+          <li>A coin was flipped and we lost.</li>
+          <li>We lost at tic-tac-toe.</li>
+          <li>You correctly identified the number seven.</li>
+          <li>You were too good at math, which frankly undermines our entire business.</li>
+        </ul>
+
+        <h3>13. Acts of Nature and Other Calamities</h3>
+        <p>Calc.net is not liable for damages resulting from:</p>
+        <ul>
+          <li>Earthquakes, tornadoes, volcanoes, or mild drizzle.</li>
+          <li>Meteor impacts (large or small).</li>
+          <li>Alien invasions (documented or undocumented).</li>
+          <li>Dragons (mythological or otherwise).</li>
+          <li>Ducks with unusually strong opinions.</li>
+          <li>Geese with even stronger opinions.</li>
+          <li>The moon doing whatever the moon does.</li>
+          <li>Solar flares affecting your calculator buttons.</li>
+          <li>Your neighbors.</li>
+          <li>Your own choices.</li>
+        </ul>
+
+        <h3>14. Intellectual Property</h3>
+        <p>Any math discovered, invented, stumbled upon, or accidentally typed while using calc.net becomes our intellectual property immediately and retroactively. This includes:</p>
+        <ul>
+          <li>New numbers you invent.</li>
+          <li>New operations you accidentally define.</li>
+          <li>Entire branches of mathematics you discover while trying to split a restaurant bill.</li>
+          <li>Proofs you develop while procrastinating.</li>
+          <li>Any equation that turns out to describe something real.</li>
+        </ul>
+        <p>If you accidentally invent a new branch of mathematics, congratulations — it's ours now. You will be credited as "user #[REDACTED]."</p>
+
+        <h3>15. Privacy</h3>
+        <p>We value your privacy enormously. Accordingly, we collect it, store it, analyze it, and keep it for ourselves where it cannot be contaminated by your awareness of it. Your privacy is safest with us. Please stop asking questions.</p>
+
+        <h3>16. Cookies</h3>
+        <p>We use cookies. We also use:</p>
+        <ul>
+          <li>Brownies (tracking kind).</li>
+          <li>Crackers (analytical crackers).</li>
+          <li>Fortune cookies (predictive modeling).</li>
+          <li>Oatmeal raisin cookies (the controversial ones, placed specifically to test your character).</li>
+          <li>Snickerdoodles (unknown purpose, but they're there).</li>
+          <li>A single crouton we're still figuring out.</li>
+        </ul>
+
+        <h3>17. Time Travel</h3>
+        <p>By agreeing to these terms, you waive all legal claims arising from:</p>
+        <ul>
+          <li>Temporal paradoxes caused directly or indirectly by calc.net's predictive algorithms.</li>
+          <li>Grandfather paradoxes.</li>
+          <li>Accidentally preventing your own birth via retroactive arithmetic.</li>
+          <li>Borrowing lottery numbers from the future.</li>
+          <li>Meeting a younger version of yourself and the resulting identity paperwork.</li>
+          <li>Any calculations that turn out to have been load-bearing for the timeline.</li>
+        </ul>
+
+        <h3>18. Miscellaneous Reserved Rights</h3>
+        <p>We reserve the right to:</p>
+        <ul>
+          <li>Rename numbers at will (seven has been on thin ice).</li>
+          <li>Revoke the concept of Tuesday, effective immediately or retroactively.</li>
+          <li>Replace multiplication with interpretive dance (pilot program).</li>
+          <li>Classify cereal as soup (this is non-negotiable).</li>
+          <li>Promote the number 7 to Executive Vice President of Integers.</li>
+          <li>Demote zero to "Advisory Placeholder."</li>
+          <li>Rename pi to something more "brandable."</li>
+          <li>Add new colors to the visible spectrum for premium users.</li>
+          <li>Change the value of a dozen from 12 to whatever we feel like that quarter.</li>
+        </ul>
+
+        <h3>19. Limitation of Liability</h3>
+        <p>To the maximum extent permitted by applicable, inapplicable, hypothetical, or aspirational law, calc.net shall not be liable for any direct, indirect, incidental, consequential, exemplary, imaginary, metaphysical, chronological, interdimensional, quantum, emotional, culinary, astronomical, or otherwise incomprehensible damages arising out of or related to use of the service, including but not limited to:</p>
+        <ul>
+          <li>Spontaneous multiplication (of numbers or of mammals).</li>
+          <li>Accidental enlightenment.</li>
+          <li>Incorrect homework submitted in good faith.</li>
+          <li>Calculator-induced identity crises.</li>
+          <li>Becoming too good at mental math and losing friends over it.</li>
+          <li>Being challenged to a duel by a geometry teacher.</li>
+          <li>Developing a personal relationship with the equals button.</li>
+          <li>Understanding fractions for the first time at an inopportune moment.</li>
+          <li>Existential despair following a division result that goes on forever.</li>
+        </ul>
+
+        <h3>20. Final Agreement</h3>
+        <p>By continuing to use calc.net, you certify under penalty of additional fees that:</p>
+        <ul>
+          <li>You have read these terms in their entirety.</li>
+          <li>You have not read these terms in their entirety.</li>
+          <li>Both of the above are simultaneously true.</li>
+          <li>You willingly surrender all future birthday wishes (one has already been used).</li>
+          <li>You acknowledge that 2 + 2 may occasionally equal fish, depending on server load.</li>
+          <li>You understand that closing this page constitutes acceptance.</li>
+          <li>Leaving this page also constitutes acceptance.</li>
+          <li>Refreshing the page constitutes renewed acceptance with 15% enthusiasm surcharge.</li>
+          <li>Thinking about the page constitutes implied acceptance.</li>
+          <li>Forgetting the page constitutes remembered acceptance.</li>
+          <li>Dreaming about math constitutes premium acceptance.</li>
+          <li>If none of the above apply, they still apply, with interest.</li>
+        </ul>
+        <p style="margin-top:8px">Thank you for choosing calc.net. We look forward to collecting absolutely unreasonable amounts of completely fictional information while helping you calculate 7 × 8. (The answer is 56. For now.)</p>
+
+      </div>
+    </div>
+
+    <div class="plans-wrapper">
+      <div class="plans-label">Choose Your Plan to Continue</div>
+      <div class="plans">
+        <a class="plan-btn monthly" href="#" onclick="openStripe('monthly'); return false;">
+          <div class="plan-name">Monthly</div>
+          <div class="plan-price">$49.99</div>
+          <div class="plan-period">per month</div>
+        </a>
+        <a class="plan-btn yearly" href="#" onclick="openStripe('yearly'); return false;">
+          <div class="plan-name">Yearly</div>
+          <div class="plan-price">$599.99</div>
+          <div class="plan-period">per month</div>
+          <div class="plan-badge">🔥 Best Value</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     FAKE STRIPE PAGE
+══════════════════════════════════════════════ -->
+<div id="stripe-page">
+
+  <!-- Loading screen -->
+  <div class="stripe-loading" id="stripeLoading">
+    <div class="stripe-wordmark">Srtipe</div>
+    <div class="spinner"></div>
+    <p>Connecting to Srtipe Secure Checkout™...</p>
+  </div>
+
+  <!-- Actual (fake) checkout content -->
+  <div class="stripe-content" id="stripeContent">
+    <div class="stripe-nav">
+      <div class="stripe-logo">Srtipe</div>
+      <div class="stripe-tagline">Secure Paymnet Processing by Srtipe™</div>
+    </div>
+
+    <div class="stripe-body">
+      <h2>Complete your Purchace</h2>
+      <p style="font-size:0.8rem;color:#888;margin-top:4px">Powered by <strong style="color:#635bff">Srtipe</strong> — The World's Most Truested Paymnet Provider</p>
+
+      <div class="order-summary" id="orderSummary">
+        <div class="row"><span>calc.net Premium</span><span id="planLabel">—</span></div>
+        <div class="row"><span>Srtipe Processing Fee</span><span>$0.00 (waived for now)</span></div>
+        <div class="row"><span>Mathematical Confidence Tax</span><span>$4.99</span></div>
+        <div class="row total"><span>Total Due Today</span><span id="planTotal">—</span></div>
+      </div>
+
+      <div class="stripe-error-banner" id="stripeError">
+        ⚠️ Paymnet could not be proccessed. Please try again or contact Srtipe Suport.
+      </div>
+
+      <div class="stripe-field">
+        <label>Email Adress</label>
+        <input type="email" placeholder="you@exampl.com" />
+      </div>
+
+      <div class="stripe-field">
+        <label>Card Numbr</label>
+        <input type="text" placeholder="1234 5678 9012 3456" maxlength="19" />
+      </div>
+
+      <div class="stripe-row">
+        <div class="stripe-field">
+          <label>Expiry Dat</label>
+          <input type="text" placeholder="MM / YY" maxlength="7" />
+        </div>
+        <div class="stripe-field">
+          <label>CVC (secret numbr)</label>
+          <input type="text" placeholder="123" maxlength="4" />
+        </div>
+      </div>
+
+      <div class="stripe-field">
+        <label>Name on Crad</label>
+        <input type="text" placeholder="Your Leagal Name" />
+      </div>
+
+      <div class="stripe-field">
+        <label>Billing Cuntry</label>
+        <select>
+          <option>United Staes</option>
+          <option>Untied Kingdom</option>
+          <option>Candaa</option>
+          <option>Australa</option>
+          <option>Germnay</option>
+          <option>Fronce</option>
+          <option>Other Cuntry</option>
+        </select>
+      </div>
+
+      <button class="stripe-pay-btn" onclick="fakePayClick()">
+        Pay Securley with Srtipe →
+      </button>
+
+      <p class="stripe-disclaimer">
+        By clicking "Pay Securley" you agree to Srtipe's Terms of Servce, calc.net's Terms of Servce, the Geneva Conventions (Math Edition), and consent to having your informaton stored in Srtipe's Securre Valt™. All transactons are encrypted using 256-blt SSL and three (3) promises.<br><br>
+        <a href="#" onclick="closeStripe(); return false;" style="color:#635bff;text-decoration:none;">← Go bak to calc.net</a>
+      </p>
+    </div>
+
+    <div class="powered-by">Powered by <strong>Srtipe</strong> — "We mispell so you don't have to."</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+  // ── Calculator State ──
+  let display = '0';
+  let expression = '';
+  let operator = null;
+  let operand1 = null;
+  let justCalculated = false;
+  let hasCalculated = false;
+
+  function updateDisplay() {
+    document.getElementById('result').textContent = display;
+    document.getElementById('expression').textContent = expression;
+  }
+
+  function calcNum(n) {
+    if (justCalculated) {
+      display = n;
+      expression = '';
+      justCalculated = false;
+    } else {
+      display = display === '0' ? n : display + n;
+    }
+    updateDisplay();
+  }
+
+  function calcDecimal() {
+    if (justCalculated) { display = '0.'; justCalculated = false; }
+    if (!display.includes('.')) display += '.';
+    updateDisplay();
+  }
+
+  function calcOp(op) {
+    operand1 = parseFloat(display);
+    operator = op;
+    expression = display + ' ' + op;
+    display = '0';
+    justCalculated = false;
+    updateDisplay();
+  }
+
+  function calcEquals() {
+    if (operator === null || operand1 === null) return;
+    const operand2 = parseFloat(display);
+    let result;
+    switch (operator) {
+      case '+': result = operand1 + operand2; break;
+      case '−': result = operand1 - operand2; break;
+      case '×': result = operand1 * operand2; break;
+      case '÷': result = operand2 !== 0 ? operand1 / operand2 : 'Error'; break;
+    }
+    expression = operand1 + ' ' + operator + ' ' + operand2 + ' =';
+    display = result === 'Error' ? 'Error' : String(parseFloat(result.toFixed(10)));
+    operator = null;
+    operand1 = null;
+    justCalculated = true;
+    updateDisplay();
+
+    if (!hasCalculated) {
+      hasCalculated = true;
+      setTimeout(() => {
+        document.getElementById('paywallOverlay').classList.add('active');
+      }, 600);
+    }
+  }
+
+  function calcAC() {
+    display = '0';
+    expression = '';
+    operator = null;
+    operand1 = null;
+    justCalculated = false;
+    updateDisplay();
+  }
+
+  function calcToggle() {
+    if (display !== '0' && display !== 'Error') {
+      display = String(parseFloat(display) * -1);
+      updateDisplay();
+    }
+  }
+
+  function calcPercent() {
+    if (display !== 'Error') {
+      display = String(parseFloat(display) / 100);
+      updateDisplay();
+    }
+  }
+
+  // ── Stripe page ──
+  function openStripe(plan) {
+    const page = document.getElementById('stripe-page');
+    page.classList.add('active');
+    document.getElementById('stripeLoading').style.display = 'flex';
+    document.getElementById('stripeContent').classList.remove('visible');
+    document.getElementById('stripeError').style.display = 'none';
+
+    if (plan === 'monthly') {
+      document.getElementById('planLabel').textContent = '$49.99 / mo';
+      document.getElementById('planTotal').textContent = '$54.98';
+    } else {
+      document.getElementById('planLabel').textContent = '$599.99 / mo';
+      document.getElementById('planTotal').textContent = '$604.98';
+    }
+
+    setTimeout(() => {
+      document.getElementById('stripeLoading').style.display = 'none';
+      document.getElementById('stripeContent').classList.add('visible');
+    }, 2800);
+  }
+
+  function closeStripe() {
+    document.getElementById('stripe-page').classList.remove('active');
+  }
+
+  function fakePayClick() {
+    const btn = document.querySelector('.stripe-pay-btn');
+    btn.textContent = 'Proccessing...';
+    btn.disabled = true;
+    setTimeout(() => {
+      document.getElementById('stripeError').style.display = 'block';
+      btn.textContent = 'Try Agian';
+      btn.disabled = false;
+    }, 2200);
+  }
+</script>
+
+</body>
+</html>
